@@ -173,13 +173,20 @@ class World():
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
         with open(path, 'r') as f:
             content = f.read().strip()
-            print('content: {}'.format(content))
             return content, self._score, self._turn, self._shadow, self._blocked
 
     def push_response(self, text, file: str = file_response):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
         with open(path, 'w') as f:
             return f.write(str(text))
+
+    def game_state(self, file: str = file_info):
+        path = './{jid}/{file}'.format(jid=self._player_id, file=file)
+        with open(path, 'r') as f:
+            x = list(f)
+            if len(x) > 0:
+                return "Score final" in (x[-1])
+            return False
 
     def is_end(self, file: str = file_info):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
@@ -228,7 +235,7 @@ class World():
 
         # pouvoir bleu 1
         elif 'Quelle salle bloquer ? (0-9)' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.bleu,
+            q = Question(self._current_tile, line, Question.Type.pouvoir.bleu.un,
                          self._Parse.pouvoir_bleu_un())
 
         # pouvoir bleu 2
@@ -245,6 +252,9 @@ class World():
         elif ', positions disponibles :' in line:
             q = Question(self._current_tile, line, Question.Type.pouvoir.blanc,
                          self._Parse.pouvoir_blanc(line))
+
+        else:
+            print('line: {}'.format(line))
 
         if q is not None:
             self._list_question.appendleft(q)

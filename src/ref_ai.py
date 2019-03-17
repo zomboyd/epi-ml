@@ -199,18 +199,20 @@ class Process():
 
         log.info('{} {}'.format(space_begin, str(self.q)))
 
-        res = {
-            _.Question.Type.unknown: lambda x: log.info(x),
-            _.Question.Type.available_tile: self.tuile_dispo,
-            _.Question.Type.available_pos: self.position_dispo,
-            _.Question.Type.use_power: self.activer_pouvoir,
-            _.Question.Type.pouvoir.gris: self.pouvoir_gris,
-            _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
-            _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
-            _.Question.Type.pouvoir.violet: self.pouvoir_violet,
-            _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
-        }[self.q.type]()
-
+        try:
+            res = {
+                _.Question.Type.unknown: lambda x: log.info(x),
+                _.Question.Type.available_tile: self.tuile_dispo,
+                _.Question.Type.available_pos: self.position_dispo,
+                _.Question.Type.use_power: self.activer_pouvoir,
+                _.Question.Type.pouvoir.gris: self.pouvoir_gris,
+                _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
+                _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
+                _.Question.Type.pouvoir.violet: self.pouvoir_violet,
+                _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
+            }[self.q.type]()
+        except KeyError:
+            print('')
         return res
 
 
