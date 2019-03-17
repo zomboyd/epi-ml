@@ -115,14 +115,14 @@ class World():
             """ Quelle salle bloquer ? (0-9) """
             return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        def pouvoir_bleu_deux(line=''):
+        def pouvoir_bleu_deux(line: str):
             """ Quelle sortie ? Chosir parmi : {0, 2} """
             return [int(x) for x in line[line.index('{') + 1:line.index('}')].split(',')]
 
         @staticmethod
-        def pouvoir_violet(lst: list):
+        def pouvoir_violet(available_tiles: list):
             """ Avec quelle couleur échanger (pas violet!) ?  """
-            return [x for x in lst if x.color is not Tile.Color.violet]
+            return [x for x in available_tiles if x.color is not Tile.Color.violet]
 
         @staticmethod
         def pouvoir_blanc(line: str):
@@ -172,7 +172,9 @@ class World():
     def pull_question(self, file: str = file_question):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
         with open(path, 'r') as f:
-            return f.read().strip(), self._score, self._turn, self._shadow, self._blocked
+            content = f.read().strip()
+            print('content: {}'.format(content))
+            return content, self._score, self._turn, self._shadow, self._blocked
 
     def push_response(self, text, file: str = file_response):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
@@ -217,17 +219,17 @@ class World():
 
         elif 'Voulez-vous activer le pouvoir' in line:
             q = Question(self._current_tile, line, Question.Type.use_power,
-                         self._Parse.use_power(line))
+                         self._Parse.use_power())
 
         # pouvoir gris
         elif 'Quelle salle obscurcir ? (0-9)' in line:
             q = Question(self._current_tile, line, Question.Type.pouvoir.gris,
-                         self._Parse.pouvoir_gris(line))
+                         self._Parse.pouvoir_gris())
 
         # pouvoir bleu 1
         elif 'Quelle salle bloquer ? (0-9)' in line:
             q = Question(self._current_tile, line, Question.Type.pouvoir.bleu,
-                         self._Parse.pouvoir_bleu(line))
+                         self._Parse.pouvoir_bleu_un())
 
         # pouvoir bleu 2
         elif 'Quelle sortie ? Chosir parmi :' in line:
@@ -237,7 +239,7 @@ class World():
         # pouvoir violet
         elif 'Avec quelle couleur échanger (pas violet!) ?' in line:
             q = Question(self._current_tile, line, Question.Type.pouvoir.violet,
-                         self._Parse.pouvoir_violet(line, copy.deepcopy(self.get_all_tuiles()).values()))
+                         self._Parse.pouvoir_violet(copy.deepcopy(self.get_all_tuiles()).values()))
 
         # pouvoir blanc
         elif ', positions disponibles :' in line:

@@ -74,8 +74,8 @@ class Process():
         response: id of the element in the list
         """
         lst = list(self.q)
-        if _.Tuile.Color.rouge in lst:
-            ret = lst.index(_.Tuile.Color.rouge)
+        if _.Tile.Color.rouge in lst:
+            ret = lst.index(_.Tile.Color.rouge)
         else:
             ret = randrange(len(lst))
         # for keeping track of the current played 'tuile'
@@ -113,8 +113,8 @@ class Process():
         question: Voulez-vous activer le pouvoir (0/1) ?
         response: 0 or 1
         """
-        use = [_.Tuile.Color.noir, _.Tuile.Color.gris]
-        not_use = [_.Tuile.Color.blanc]
+        use = [_.Tile.Color.noir, _.Tile.Color.gris]
+        not_use = [_.Tile.Color.blanc]
 
         if self.world.current_tile is None:
             return 0
@@ -198,9 +198,10 @@ class Process():
         res = self.take_action(q, score, turn, shadow, blocked)
 
         log.info('{} {}'.format(space_begin, str(self.q)))
+
         res = {
             _.Question.Type.unknown: lambda x: log.info(x),
-            _.Question.Type.available_tiles: self.tuile_dispo,
+            _.Question.Type.available_tile: self.tuile_dispo,
             _.Question.Type.available_pos: self.position_dispo,
             _.Question.Type.use_power: self.activer_pouvoir,
             _.Question.Type.pouvoir.gris: self.pouvoir_gris,
@@ -228,7 +229,7 @@ def lancer():
         if turn_info != old_turn_info and turn_info != [] and turn_info[0] != '':
             log.info('QUESTION: {}'.format(turn_info[0]))
             question = world.parse_question(turn_info[0])
-            res = process.process_question(question, turn_info[1], turn_info[2], turn_info[3])
+            res = process.process_question(question, turn_info[1], turn_info[2], turn_info[3], turn_info[4])
             log.info('REPONSE: {}'.format(res))
             world.push_response(res)
             log.info('')
