@@ -67,6 +67,7 @@ class World():
     file_question = 'questions.txt'
     file_response = 'reponses.txt'
     file_info = 'infos.txt'
+    info_line = 0
 
     class Score():
         def __init__(self, value=None, max=None):
@@ -153,7 +154,7 @@ class World():
         return '<{c!s}: {str!s}>'.format(c=self.__class__.__name__, str=self)
 
     def __str__(self):
-        return 'Tour={_tour!s}, {_score!s}, Ombre={_ombre!s}, Bloque={_bloque!s}'.format(**self.__dict__)
+        return 'Tour={_turn!s}, {_score!s}, Ombre={_shadow!s}, Bloque={_blocked!s}'.format(**self.__dict__)
 
     def get_all_tuiles(self):
         return {k: self._game_tiles[k][0] for k in self._game_tiles}
@@ -180,13 +181,17 @@ class World():
         with open(path, 'w') as f:
             return f.write(str(text))
 
-    def game_state(self, file: str = file_info):
+    def get_game_state(self, file: str = file_info):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
         with open(path, 'r') as f:
             x = list(f)
-            if len(x) > 0:
-                return "Score final" in (x[-1])
-            return False
+            if len(x) >= self.info_line:
+                x = x[self.info_line:]
+                self.info_line = len(x)
+                for line in x:
+                    self.parse_word_state(line)
+                    return self._score, self._turn, self._shadow, self._blocked
+            return None
 
     def is_end(self, file: str = file_info):
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
@@ -203,14 +208,16 @@ class World():
 
         self._line = line
         r = re.search(r'^Tour:(?P<tour>[0-9]*),'
-                      '.*Score:(?P<score-v>[0-9]*)/(?P<score-m>[0-9]*),'
+                      '.*Score:(?P<scorev>[0-9]*)/(?P<scorem>[0-9]*),'
                       '.*Ombre:(?P<ombre>[0-9]*),'
                       '.*Bloque:{(?P<bloque>.*)}$', line)
-        self._turn = int(r.group('tour'))
-        self._score = self.Score(value=r.group('score-v'),
-                                 max=r.group('score-m'))
-        self._shadow = int(r.group('ombre'))
-        self._blocked = [int(x) for x in r.group('bloque').split(',')]
+
+        if r is not None:
+            self._turn = int(r.group('tour'))
+            self._score = self.Score(value=r.group('scorev'),
+                                     max=r.group('scorem'))
+            self._shadow = int(r.group('ombre'))
+            self._blocked = [int(x) for x in r.group('bloque').split(',')]
 
     def parse_question(self, line: str):
         q = None
@@ -253,9 +260,6 @@ class World():
             q = Question(self._current_tile, line, Question.Type.pouvoir.blanc,
                          self._Parse.pouvoir_blanc(line))
 
-        else:
-            print('line: {}'.format(line))
-
         if q is not None:
             self._list_question.appendleft(q)
         return q
@@ -273,9 +277,17 @@ class World():
     def tour(self):
         return self._turn
 
+    @tour.setter
+    def tour(self, tour):
+        self._turn = tour
+
     @property
     def score(self):
         return self._score
+
+    @score.setter
+    def score(self, score):
+        self._score = score
 
     @property
     def shadow(self):
