@@ -233,7 +233,7 @@ class World():
             if players != []:
                 self.players = players
 
-        r = re.search(r'!!! Le fantôme est : (?P<phantom_color>)', line)
+        r = re.search(r'!!! Le fantôme est : (?P<phantom_color>\w+)', line)
         if r is not None:
             self.phantom_color = r.group('phantom_color')
 
