@@ -139,6 +139,7 @@ class World():
         self._blocked = None
         self._current_tile = None
         self.players = None
+        self._phantom_color = None
         self._list_question = deque([])
         self._game_tiles = {
             Tile.Color.rose: deque([Tile(Tile.Color.rose)]),
