@@ -138,6 +138,7 @@ class World():
         self._shadow = None
         self._blocked = None
         self._current_tile = None
+        self.players = None
         self._list_question = deque([])
         self._game_tiles = {
             Tile.Color.rose: deque([Tile(Tile.Color.rose)]),
@@ -191,7 +192,7 @@ class World():
                 self.info_line = len(x)
                 for line in x:
                     self.parse_word_state(line)
-                    return self._score, self._turn, self._shadow, self._blocked
+                    return self._score, self._turn, self._shadow, self._blocked, self._phantom_color, self._players
             return None
 
     def is_end(self, file: str = file_info):
@@ -219,6 +220,22 @@ class World():
                                      max=r.group('scorem'))
             self._shadow = int(r.group('ombre'))
             self._blocked = [int(x) for x in r.group('bloque').split(',')]
+
+        matches = re.findall(r'\w+-[0-9]-\w+', line)
+        if len(matches) == 8:
+            players = []
+            for match in matches:
+                r = re.search(r'^(?P<color>\w*)-*'
+                              '-*(?P<pos>[0-9]*)-*'
+                              '.*-(?P<status>\w+)$', match)
+                if r is not None:
+                    players.append((r.group('color'), int(r.group('pos')), r.group('status')))
+            if players != []:
+                self.players = players
+
+        r = re.search(r'!!! Le fantôme est : (?P<phantom_color>)', line)
+        if r is not None:
+            self.phantom_color = r.group('phantom_color')
 
     def parse_question(self, line: str):
         q = None
@@ -281,6 +298,22 @@ class World():
     @tour.setter
     def tour(self, tour):
         self._turn = tour
+
+    @property
+    def players(self):
+        return self._turn
+
+    @players.setter
+    def players(self, players):
+        self._players = players
+
+    @property
+    def phantom_color(self):
+        return self._score
+
+    @phantom_color.setter
+    def phantom_color(self, phantom_color):
+        self._phantom_color = phantom_color
 
     @property
     def score(self):
