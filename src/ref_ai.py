@@ -189,30 +189,28 @@ class Process():
         res = randrange(len(lst))
         return lst[res]
 
-    def process_question(self, q: _.Question, score: int, turn: int, shadow: (), blocked: ()):
+    def process_question(self, q: _.Question, game_state: {}):
         if q is None:
             return -1
 
         self.q = q
 
-        res = self.take_action(q, score, turn, shadow, blocked)
+        res = self.take_action(q, game_state)
 
         log.info('{} {}'.format(space_begin, str(self.q)))
 
-        try:
-            res = {
-                _.Question.Type.unknown: lambda x: log.info(x),
-                _.Question.Type.available_tile: self.tuile_dispo,
-                _.Question.Type.available_pos: self.position_dispo,
-                _.Question.Type.use_power: self.activer_pouvoir,
-                _.Question.Type.pouvoir.gris: self.pouvoir_gris,
-                _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
-                _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
-                _.Question.Type.pouvoir.violet: self.pouvoir_violet,
-                _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
-            }[self.q.type]()
-        except KeyError:
-            print('')
+        res = {
+            _.Question.Type.unknown: lambda x: log.info(x),
+            _.Question.Type.available_tile: self.tuile_dispo,
+            _.Question.Type.available_pos: self.position_dispo,
+            _.Question.Type.use_power: self.activer_pouvoir,
+            _.Question.Type.pouvoir.gris: self.pouvoir_gris,
+            _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
+            _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
+            _.Question.Type.pouvoir.violet: self.pouvoir_violet,
+            _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
+        }[self.q.type]()
+
         return res
 
     def evaluate_choices(self, choices):
@@ -220,30 +218,26 @@ class Process():
         print('current_tile : ', current_tuile)
         return 0
 
-    def take_action(self, q: _.Question, score, turn, shadow, blocked):
-        choices = list(q)
-        choice = choices[randrange(len(choices))]
-        scored_choices = self.evaluate_choices(choices)
-        print('choices : ', choices)
-        print('choice : ', choice)
-        return choice
+    def take_action(self, q: _.Question, game_state):
+        print('processing...')
 
 def lancer():
-    old_turn_info = None
+    old_question = None
 
     world = _.World(jid)
     process = Process(world)
     world.init_file()
 
     while not world.is_end():
-        turn_info = world.pull_question()
-        if turn_info != old_turn_info and turn_info != [] and turn_info[0] != '':
-            print('turn_info : ', turn_info)
-            log.info('QUESTION: {}'.format(turn_info[0]))
-            question = world.parse_question(turn_info[0])
-            res = process.process_question(question, turn_info[1], turn_info[2], turn_info[3], turn_info[4])
+        question = world.pull_question()
+
+        game_state = world.get_game_state()
+        if question != old_question and question != '':
+            log.info('QUESTION: {}'.format(question[0]))
+            question = world.parse_question(question[0])
+            res = process.process_question(question, game_state)
             log.info('REPONSE: {}'.format(res))
             world.push_response(res)
             log.info('')
-            old_turn_info = turn_info
+            old_question = question
     log.info('=== END')
