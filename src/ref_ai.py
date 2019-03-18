@@ -215,9 +215,18 @@ class Process():
             print('')
         return res
 
+    def evaluate_choices(self, choices):
+        current_tuile = self.world._current_tile
+        print('current_tile : ', current_tuile)
+        return 0
 
     def take_action(self, q: _.Question, score, turn, shadow, blocked):
-        print('processing...')
+        choices = list(q)
+        choice = choices[randrange(len(choices))]
+        scored_choices = self.evaluate_choices(choices)
+        print('choices : ', choices)
+        print('choice : ', choice)
+        return choice
 
 def lancer():
     old_turn_info = None
@@ -229,6 +238,7 @@ def lancer():
     while not world.is_end():
         turn_info = world.pull_question()
         if turn_info != old_turn_info and turn_info != [] and turn_info[0] != '':
+            print('turn_info : ', turn_info)
             log.info('QUESTION: {}'.format(turn_info[0]))
             question = world.parse_question(turn_info[0])
             res = process.process_question(question, turn_info[1], turn_info[2], turn_info[3], turn_info[4])

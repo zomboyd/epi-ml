@@ -173,6 +173,7 @@ class World():
         path = './{jid}/{file}'.format(jid=self._player_id, file=file)
         with open(path, 'r') as f:
             content = f.read().strip()
+            # print('content: {}'.format(content))
             return content, self._score, self._turn, self._shadow, self._blocked
 
     def push_response(self, text, file: str = file_response):
