@@ -1,7 +1,8 @@
 from random import shuffle, randrange
 from time import sleep
 from threading import Thread
-import ref_ai
+import fantome
+import inspector
 
 latence = 0.01
 permanents, deux, avant, apres = {'rose'}, {'rouge', 'gris', 'bleu'}, {'violet', 'marron'}, {'noir', 'blanc'}
@@ -209,6 +210,6 @@ class partie:
 
 
 joueurs = [joueur(0), joueur(1)]
-Thread(target=ref_ai.lancer).start()
-Thread(target=ref_ai.lancer).start()
+Thread(target=inspector.lancer).start()
+Thread(target=fantome.lancer).start()
 partie(joueurs).lancer()

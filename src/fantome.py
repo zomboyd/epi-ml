@@ -7,7 +7,8 @@ jid = '1'
 role = "l'inspecteur" if jid == '0' else 'le fantome'
 space_begin = '      '
 formatter = logging.Formatter(
-    fmt='%(asctime)s.%(msecs)03d - %(levelname)-8s:{role:12} - %(message)s'.format(role=role),
+    fmt='%(asctime)s.%(msecs)03d - %(levelname)-8s:{role:12} - %(message)s'.format(
+        role=role),
     datefmt='%H:%M:%S'
 )
 
@@ -67,13 +68,25 @@ class Process():
 
     def __init__(self, world: _.World):
         self.world = world
+        self.func_map = {
+            _.Question.Type.unknown: lambda x: log.info(x),
+            _.Question.Type.available_tile: self.tuile_dispo,
+            _.Question.Type.available_pos: self.position_dispo,
+            _.Question.Type.use_power: self.activer_pouvoir,
+            _.Question.Type.pouvoir.gris: self.pouvoir_gris,
+            _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
+            _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
+            _.Question.Type.pouvoir.violet: self.pouvoir_violet,
+            _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
+        }
 
-    def tuile_dispo(self):
+    def tuile_dispo(self, q, state):
         """
         question: Tuiles disponibles : [rose-3-clean, gris-4-clean] choisir entre 0 et 2
         response: id of the element in the list
         """
-        lst = list(self.q)
+        lst = list(q)
+
         if _.Tile.Color.rouge in lst:
             ret = lst.index(_.Tile.Color.rouge)
         else:
@@ -82,33 +95,34 @@ class Process():
         self.world.current_tile = self.world.get_tuile(lst[ret])
         return ret
 
-    def position_dispo(self):
+    def position_dispo(self, q, state):
         """
         question: positions disponibles : {1, 3}, choisir la valeur
         response: an element of the list
         """
-        lst = list(self.q)
+
+        lst = list(q)
         dct = {}
-        for v in self.world.get_all_tuiles().values():
-            if v.position is None or v.position not in list(self.q):
+        tuiles = self.world.get_all_tuiles().values()
+        for v in tuiles:
+            if v.position is None or v.position not in list(q):
                 continue
-            if v.position not in dct:
-                dct[v.position] = []
-            dct[v.position].append(v)
+            if  v.position is not None and v.position in list(q):
+                if v.position in dct:
+                    dct[v.position].append(v)
+                else:
+                    dct[v.position] = [v]
 
         for k, v in dct.items():
             log.info(space_begin + '{!s}: {!s}'.format(k, v))
-
         dct = {k: len(v) for k, v in dct.items()}
         dct = sorted(dct, key=dct.get, reverse=True)
 
         if len(dct) is not 0:
-            ret = dct[0]
-        else:
-            ret = lst[randrange(len(lst))]
-        return ret
+            return dct[0]
+        return lst[randrange(len(lst))]
 
-    def activer_pouvoir(self):
+    def activer_pouvoir(self, q, state):
         """
         question: Voulez-vous activer le pouvoir (0/1) ?
         response: 0 or 1
@@ -124,12 +138,12 @@ class Process():
             return 0
         return 1
 
-    def pouvoir_gris(self):
+    def pouvoir_gris(self, q, state):
         """
         question: Quelle salle obscurcir ? (0-9)
         response: number between 0 and 9
         """
-        lst = list(self.q)
+        lst = list(q)
         dct = {}
         for v in self.world.get_all_tuiles().values():
             if v.position is None:
@@ -144,93 +158,70 @@ class Process():
             log.info(space_begin + '{!s}: {!s}'.format(k, v))
 
         dct = {k: len(v) for k, v in dct.items()}
+        print('dct : ', dct)
         dct = sorted(dct, key=dct.get)
 
         if len(dct) is not 0:
             ret = dct[0]
         else:
             ret = lst[randrange(len(lst))]
-
         return ret
 
-    def pouvoir_bleu_un(self):
+    def pouvoir_bleu_un(self, q, state):
         """
         question: Quelle salle bloquer ? (0-9)
         response: number between 0 and 9
         """
-        lst = list(self.q)
+        lst = list(q)
         res = randrange(len(lst))
         return res
 
-    def pouvoir_bleu_deux(self):
+    def pouvoir_bleu_deux(self, q, state):
         """
         question: Quelle sortie ? Chosir parmi : {0, 2}
         response: an element of the list
         """
-        lst = list(self.q)
+        lst = list(q)
         res = randrange(len(lst))
         return lst[res]
 
-    def pouvoir_violet(self):
+    def pouvoir_violet(self, q, state):
         """
         question: Avec quelle couleur échanger (pas violet!) ?
         response: color of an element in the list
         """
-        lst = list(self.q)
+        lst = list(q)
         res = randrange(len(lst))
         return lst[res].color
 
-    def pouvoir_blanc(self):
+    def pouvoir_blanc(self, q, state):
         """
         question: rose-6-suspect, positions disponibles : {5, 7}, choisir la valeur
         response: an element of the list
         """
-        lst = list(self.q)
+        lst = list(q)
         res = randrange(len(lst))
         return lst[res]
 
     def process_question(self, q: _.Question, game_state: {}):
         if q is None:
             return -1
-
-        self.q = q
-
         res = self.take_action(q, game_state)
-
-        log.info('{} {}'.format(space_begin, str(self.q)))
-
-        res = {
-            _.Question.Type.unknown: lambda x: log.info(x),
-            _.Question.Type.available_tile: self.tuile_dispo,
-            _.Question.Type.available_pos: self.position_dispo,
-            _.Question.Type.use_power: self.activer_pouvoir,
-            _.Question.Type.pouvoir.gris: self.pouvoir_gris,
-            _.Question.Type.pouvoir.bleu.un: self.pouvoir_bleu_un,
-            _.Question.Type.pouvoir.bleu.deux: self.pouvoir_bleu_deux,
-            _.Question.Type.pouvoir.violet: self.pouvoir_violet,
-            _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
-        }[self.q.type]()
-
+        log.info('{} {}'.format(space_begin, str(q)))
         return res
 
-    def evaluate_choices(self, choices):
-        current_tuile = self.world._current_tile
-        print('current_tile : ', current_tuile)
-        return 0
-
     def take_action(self, q: _.Question, game_state):
-        print('processing...')
+        ret = self.func_map[q.type](q, game_state)
+        return ret
+
 
 def lancer():
     old_question = None
-
     world = _.World(jid)
     process = Process(world)
     world.init_file()
-
     while not world.is_end():
         question = world.pull_question()
-
         game_state = world.get_game_state()
         if question != old_question and question != '':
             log.info('QUESTION: {}'.format(question[0]))
