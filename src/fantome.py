@@ -106,9 +106,7 @@ class Process():
         """
 
         lst = list(q)
-        print('lst : ', lst)
         ret = lst[randrange(len(lst))]
-        print('ret : ', ret)
         return ret
 
     def activer_pouvoir(self, q, state):
@@ -138,7 +136,6 @@ class Process():
             log.info(space_begin + '{!s}: {!s}'.format(k, v))
 
         dct = {k: len(v) for k, v in dct.items()}
-        print('dct : ', dct)
         dct = sorted(dct, key=dct.get)
 
         if len(dct) is not 0:
@@ -191,18 +188,22 @@ class Process():
         return res
 
     def take_action(self, q: _.Question, game_state):
-        print('world : ', self.world)
-        print('players : ', self.world.players)
         tiles = self.world.get_all_tuiles().values()
         score = int(self.world.score.value) if self.world.score and self.world.score.value else 0
-        print(f'score : {score}')
+        score_max = int(self.world.score.max) if self.world.score and self.world.score.max else 0
+
         nb_suspects = len(list(filter(lambda x: x.status and x.status.value, tiles)))
-        print(f'nb_suspects : {nb_suspects}')
         r = compute_reward(score, nb_suspects, self.world.tour or 0)
         ret = self.func_map[q.type](q, game_state)
-        self.history.append((q.type, r, ret))
+        self.history.append((q.type.value, r, ret, score_max))
         return ret
 
+def log_to_csv(items):
+    import csv
+    with open(f'./{jid}/log.csv', 'a+') as f:
+        writer = csv.writer(f)
+        for item in items:
+            writer.writerow(item)
 
 def lancer():
     old_question = None
@@ -220,5 +221,6 @@ def lancer():
             world.push_response(res)
             log.info('')
             old_question = question
-    print('reward fantome : ', process.history[-1][1])
     log.info('=== END')
+    log_to_csv(process.history)
+    return process.history

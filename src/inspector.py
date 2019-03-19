@@ -90,7 +90,7 @@ class Process():
         response: id of the element in the list
         """
         lst = list(q)
-        return lst[randrange(len(lst))]
+        return randrange(len(lst))
 
     def position_dispo(self, q, state):
         """
@@ -144,14 +144,13 @@ class Process():
         """
         lst = list(q)
         res = randrange(len(lst))
-        return res
+        return lst[res]
 
     def pouvoir_bleu_deux(self, q, state):
         """
         question: Quelle sortie ? Chosir parmi : {0, 2}
         response: an element of the list
         """
-        print('pouvoir_bleu_deux')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res]
@@ -161,7 +160,6 @@ class Process():
         question: Avec quelle couleur échanger (pas violet!) ?
         response: color of an element in the list
         """
-        print('pouvoir_violet')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res].color
@@ -171,7 +169,6 @@ class Process():
         question: rose-6-suspect, positions disponibles : {5, 7}, choisir la valeur
         response: an element of the list
         """
-        print('pouvoir_blanc')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res]
@@ -187,12 +184,21 @@ class Process():
     def take_action(self, q: _.Question, game_state):
         tiles = self.world.get_all_tuiles().values()
         score = int(self.world.score.value) if self.world.score and self.world.score.value else 0
+        score_max = int(self.world.score.max) if self.world.score and self.world.score.max else 0
         nb_suspects = len(list(filter(lambda x: x.status and x.status.value, tiles)))
         r = compute_reward(score, nb_suspects, self.world.tour or 0)
-        ret = self.func_map[q.type](q, game_state)
-        self.history.append((q, r, ret))
+        func = self.func_map[q.type]
+        ret = func(q, game_state)
+        self.history.append((q.type.value, r, ret, score_max))
         return ret
 
+
+def log_to_csv(items):
+    import csv
+    with open(f'./{jid}/log.csv', 'a+') as f:
+        writer = csv.writer(f)
+        for item in items:
+            writer.writerow(item)
 
 def lancer():
     old_question = None
@@ -210,5 +216,6 @@ def lancer():
             world.push_response(res)
             log.info('')
             old_question = question
-    print('reward history : ', process.history[-1][1])
     log.info('=== END')
+    log_to_csv(process.history)
+    return process.history

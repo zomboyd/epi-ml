@@ -208,6 +208,8 @@ class partie:
         return "Tour:" + str(self.num_tour) + ", Score:" + str(self.start) + "/" + str(self.end) + ", Ombre:" + str(
             self.shadow) + ", Bloque:" + str(self.bloque) + "\n" + "  ".join([str(p) for p in self.personnages])
 
+
+
 joueurs = [joueur(0), joueur(1)]
 Thread(target=inspector.lancer).start()
 Thread(target=fantome.lancer).start()
