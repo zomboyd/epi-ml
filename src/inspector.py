@@ -43,6 +43,9 @@ log.addHandler(handler)
 #
 
 
+def compute_reward(score, nb_suspects, nb_tour):
+    return score + (8 - (nb_suspects * (1 / (nb_tour + 1))))
+
 class Process():
 
     passages = [{1, 4},
@@ -79,6 +82,7 @@ class Process():
             _.Question.Type.pouvoir.violet: self.pouvoir_violet,
             _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
         }
+        self.history = []
 
     def tuile_dispo(self, q, state):
         """
@@ -86,11 +90,7 @@ class Process():
         response: id of the element in the list
         """
         lst = list(q)
-        ret = randrange(len(lst))
-
-        # for keeping track of the current played 'tuile'
-        self.world.current_tile = self.world.get_tuile(lst[ret])
-        return lst[ret]
+        return lst[randrange(len(lst))]
 
     def position_dispo(self, q, state):
         """
@@ -99,39 +99,14 @@ class Process():
         """
 
         lst = list(q)
-        dct = {}
-        tuiles = self.world.get_all_tuiles().values()
-        a_tuiles = []
-        for v in tuiles:
-            if  v.position is not None and v.position in lst:
-                a_tuiles.append(v)
-
-        for k, v in dct.items():
-            log.info(space_begin + '{!s}: {!s}'.format(k, v))
-        suspects = list(filter(lambda t: t.status.value, a_tuiles))
-        if len(suspects) > 0:
-            ret = suspects[0].position
-            print('ret suspect : ', ret)
-            return ret
-        ret = a_tuiles[0].position
-        print('ret : ', ret)
-        return ret
+        return lst[randrange(len(lst))]
 
     def activer_pouvoir(self, q, state):
         """
         question: Voulez-vous activer le pouvoir (0/1) ?
         response: 0 or 1
         """
-        use = [_.Tile.Color.noir, _.Tile.Color.gris]
-        not_use = [_.Tile.Color.blanc]
-
-        if self.world.current_tile is None:
-            return 0
-        if self.world.current_tile.Color in use:
-            return 1
-        elif self.world.current_tile.Color in not_use:
-            return 0
-        return 1
+        return randrange(2)
 
     def pouvoir_gris(self, q, state):
         """
@@ -176,6 +151,7 @@ class Process():
         question: Quelle sortie ? Chosir parmi : {0, 2}
         response: an element of the list
         """
+        print('pouvoir_bleu_deux')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res]
@@ -185,6 +161,7 @@ class Process():
         question: Avec quelle couleur échanger (pas violet!) ?
         response: color of an element in the list
         """
+        print('pouvoir_violet')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res].color
@@ -194,6 +171,7 @@ class Process():
         question: rose-6-suspect, positions disponibles : {5, 7}, choisir la valeur
         response: an element of the list
         """
+        print('pouvoir_blanc')
         lst = list(q)
         res = randrange(len(lst))
         return lst[res]
@@ -207,7 +185,12 @@ class Process():
         return res
 
     def take_action(self, q: _.Question, game_state):
-        ret = self.func_map[self.q.type](q, game_state)
+        tiles = self.world.get_all_tuiles().values()
+        score = int(self.world.score.value) if self.world.score and self.world.score.value else 0
+        nb_suspects = len(list(filter(lambda x: x.status and x.status.value, tiles)))
+        r = compute_reward(score, nb_suspects, self.world.tour or 0)
+        ret = self.func_map[q.type](q, game_state)
+        self.history.append((q, r, ret))
         return ret
 
 
@@ -227,4 +210,5 @@ def lancer():
             world.push_response(res)
             log.info('')
             old_question = question
+    print('reward history : ', process.history[-1][1])
     log.info('=== END')

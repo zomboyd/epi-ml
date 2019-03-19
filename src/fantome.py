@@ -42,6 +42,8 @@ log.addHandler(handler)
 #       \______/
 #
 
+def compute_reward(score, nb_suspects, nb_tour):
+    return score - (8 - (nb_suspects * (1 / (nb_tour + 1))))
 
 class Process():
 
@@ -79,6 +81,8 @@ class Process():
             _.Question.Type.pouvoir.violet: self.pouvoir_violet,
             _.Question.Type.pouvoir.blanc: self.pouvoir_blanc,
         }
+        self.reward = 0
+        self.history = []
 
     def tuile_dispo(self, q, state):
         """
@@ -102,41 +106,17 @@ class Process():
         """
 
         lst = list(q)
-        dct = {}
-        tuiles = self.world.get_all_tuiles().values()
-        for v in tuiles:
-            if v.position is None or v.position not in list(q):
-                continue
-            if  v.position is not None and v.position in list(q):
-                if v.position in dct:
-                    dct[v.position].append(v)
-                else:
-                    dct[v.position] = [v]
-
-        for k, v in dct.items():
-            log.info(space_begin + '{!s}: {!s}'.format(k, v))
-        dct = {k: len(v) for k, v in dct.items()}
-        dct = sorted(dct, key=dct.get, reverse=True)
-
-        if len(dct) is not 0:
-            return dct[0]
-        return lst[randrange(len(lst))]
+        print('lst : ', lst)
+        ret = lst[randrange(len(lst))]
+        print('ret : ', ret)
+        return ret
 
     def activer_pouvoir(self, q, state):
         """
         question: Voulez-vous activer le pouvoir (0/1) ?
         response: 0 or 1
         """
-        use = [_.Tile.Color.noir, _.Tile.Color.gris]
-        not_use = [_.Tile.Color.blanc]
-
-        if self.world.current_tile is None:
-            return 0
-        if self.world.current_tile.Color in use:
-            return 1
-        elif self.world.current_tile.Color in not_use:
-            return 0
-        return 1
+        return randrange(2)
 
     def pouvoir_gris(self, q, state):
         """
@@ -211,7 +191,16 @@ class Process():
         return res
 
     def take_action(self, q: _.Question, game_state):
+        print('world : ', self.world)
+        print('players : ', self.world.players)
+        tiles = self.world.get_all_tuiles().values()
+        score = int(self.world.score.value) if self.world.score and self.world.score.value else 0
+        print(f'score : {score}')
+        nb_suspects = len(list(filter(lambda x: x.status and x.status.value, tiles)))
+        print(f'nb_suspects : {nb_suspects}')
+        r = compute_reward(score, nb_suspects, self.world.tour or 0)
         ret = self.func_map[q.type](q, game_state)
+        self.history.append((q.type, r, ret))
         return ret
 
 
@@ -231,4 +220,5 @@ def lancer():
             world.push_response(res)
             log.info('')
             old_question = question
+    print('reward fantome : ', process.history[-1][1])
     log.info('=== END')
