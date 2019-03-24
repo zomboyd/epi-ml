@@ -216,7 +216,7 @@ class Process():
 
 def log_to_csv(items):
     import csv
-    with open(f'./{jid}/log.csv', 'a+') as f:
+    with open('./{}/log.csv'.format(jid), 'a+') as f:
         writer = csv.writer(f)
         for item in items:
             writer.writerow(item)
@@ -230,11 +230,11 @@ def lancer(qtable):
     agent = Inspector(jid, world)
     while not world.is_end():
         question = world.pull_question()
-        if question != old_question and question != "":
+        if question is not None and question != old_question:
             log.info('QUESTION: {}'.format(question))
-            parsed_question = world.parse_question(question)
+            parsed_question = world.parse_question(question[0])
             res = agent.get_action(list(parsed_question), parsed_question)
-            print(f'res : {res}')
+            print('res : {}'.format(res))
             log.info('REPONSE: {}'.format(res))
             world.push_response(res)
             log.info('')

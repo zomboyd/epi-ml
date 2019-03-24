@@ -21,15 +21,15 @@ class Agent:
     def __init__(self, player_id, env):
         self.player_id = player_id
         self.q_table = {
-            Question.Type.activer_pouvoir.value: np.zeros((4, 2)),
-            Question.Type.position_dispo.value: np.zeros((4, 8)),
-            Question.Type.tuile_dispo.value: np.zeros((4, 8)),
+            Question.Type.use_power.value: np.zeros((4, 2)),
+            Question.Type.available_pos.value: np.zeros((4, 8)),
+            Question.Type.available_tile.value: np.zeros((4, 8)),
         }
         self.states = []
         self.history = {
-            Question.Type.activer_pouvoir.value: [],
-            Question.Type.position_dispo.value: [],
-            Question.Type.tuile_dispo.value: [],
+            Question.Type.use_power.value: [],
+            Question.Type.available_pos.value: [],
+            Question.Type.available_tile.value: [],
             5.1: [],
             5.2: [],
             6: [],
@@ -37,7 +37,7 @@ class Agent:
         }
         self.env = env
         self.epochs = 0
-        self.train_file = f'./{player_id}/train.json'
+        self.train_file = './{}/train.json'.format(player_id)
         self.lr = .8
         self.y = .95
         # self.load()
@@ -56,7 +56,7 @@ class Agent:
         # state = np.array([1, 2, 2, 4]).reshape((1, 4))
         action = self.pick_a_random_action(choices)
         nb_suspects = self.get_nb_suspects()
-        print(f'nb_ suspects : {nb_suspects}')
+        print('nb_ suspects : {}'.format(nb_suspects))
         q_type = question.type.value
         if getattr(action, 'value', None):
             action = action.value
@@ -66,7 +66,7 @@ class Agent:
         #         action = action.value
         # else:
         #     action = int(self.q_table[q_type][state][np.argmax(self.q_table[q_type][state])])
-            print(f'action -> {action} || choices : {choices}')
+            print('action -> {} || choices : {}'.format(action, choices))
         self.states.append(state)
         reward = self.compute_reward(state, action, q_type)
         self.history[q_type].append((state, action, choices, reward))
@@ -76,7 +76,7 @@ class Agent:
 
     def update_table(self, state, next_state, action, reward, question):
         # Q[s,a] = Q[s,a] + lr*(r + y*np.max(Q[s1,:]) - Q[s,a])
-        print(f'question : {question}')
+        print('question : {}'.format(question))
         # try:
         self.q_table[question][state, action] = self.q_table[question][state, action] + self.lr * \
             (reward + self.y * np.max(self.q_table[question][next_state, :]) - self.q_table[question][state, action])

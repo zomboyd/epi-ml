@@ -229,9 +229,9 @@ def lancer(qtable):
     agent = Fantome(jid, world)
     while not world.is_end():
         question = world.pull_question()
-        if question != old_question and question != "":
+        if question is not None and question != old_question:
             log.info('QUESTION: {}'.format(question))
-            parsed_question = world.parse_question(question)
+            parsed_question = world.parse_question(question[0])
             res = agent.get_action(list(parsed_question), parsed_question)
             print(f'res : {res}')
             log.info('REPONSE: {}'.format(res))
