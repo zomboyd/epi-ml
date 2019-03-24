@@ -232,6 +232,5 @@ def lancer(qtable):
             world.push_response(res)
             log.info('')
             old_question = question
-    print('inspector table : ', agent.q_table)
     log.info('=== END')
     agent.save()

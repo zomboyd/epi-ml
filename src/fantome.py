@@ -235,6 +235,5 @@ def lancer(qtable):
             world.push_response(res)
             log.info('')
             old_question = question
-    print('fantome history : ', agent.history)
     log.info('=== END')
     agent.save()

@@ -20,7 +20,7 @@ class Agent:
 
     def __init__(self, player_id, env):
         self.player_id = player_id
-        self.q_table = np.zeros((7, 10))
+        self.q_table = np.zeros((22, 10))
         self.states = []
         self.history = {
             Question.Type.activer_pouvoir.value: [],
@@ -47,20 +47,24 @@ class Agent:
                     nb_suspects += 1
         return nb_suspects
 
+    def get_state(self, q_type, choices, score, nb_suspects):
+        state = np.array([])
+        state = np.append(state, q_type)
+        state = np.append(state, len(choices))
+        state = np.append(state, score)
+        state = np.append(state, nb_suspects)
+        return state.astype(int)
+
     def get_action(self, choices, question):
-        import pdb; pdb.set_trace()
-        state = np.random.randint(0, 4, (1, 4))
-        score = np.random.randint(0, 24, 1)
+        score = np.random.randint(0, 13, 1)[0]
         q_type = question.type.value
-        np.append(state, q_type)
-        np.append(state, len(choices))
-        np.append(state, score)
         nb_suspects = self.get_nb_suspects()
-        print(f'nb_ suspects : {nb_suspects}')
+        state = self.get_state(q_type, choices, score, nb_suspects)
+        print(f'shape : {state.shape}')
         if len(self.states) == 0 or np.random.randn() < 0.1:
             action = self.pick_a_random_action(choices)
         else:
-            print('q_table ', self.q_table[state, :])
+            print('state : ', state)
             action_index = np.argmax(self.q_table[state, :])
             if action_index in list(range(0, len(choices))):
                 action = action_index
@@ -68,12 +72,11 @@ class Agent:
                 print(f'not good {action_index}')
                 action = self.pick_a_random_action(choices)
             print(f'action -> {action} || choices : {choices}')
-            print(f'action -> {action} || choices : {choices}')
         self.states.append(state)
         reward = self.compute_reward(nb_suspects, score, self.epochs)
         next_state = np.random.randint(0, 4, (1, 7))
         self.history[q_type].append((state, action, choices, reward))
-        self.update_table(state, next_state, action, reward, q_type)
+        # self.update_table(state, next_state, action, reward, q_type)
         self.epochs += 1
         return action
 
