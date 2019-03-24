@@ -4,7 +4,8 @@ from collections import deque
 from enum import Enum
 
 
-class Tile:
+class Tuile:
+
     class Status(Enum):
         clean = 0
         suspect = 1
@@ -31,7 +32,7 @@ class Tile:
         def __str__(self):
             return self.name
 
-    def __init__(self, color: Color, status: Status = None, position: int = None):
+    def __init__(self, color: Color, status: Status=None, position: int=None):
         self._color = color
         self._position = position
         self._status = status
@@ -64,10 +65,10 @@ class Tile:
 
 
 class World():
+
     file_question = 'questions.txt'
     file_response = 'reponses.txt'
     file_info = 'infos.txt'
-    info_line = 0
 
     class Score():
         def __init__(self, value=None, max=None):
@@ -83,121 +84,108 @@ class World():
     class _Parse():
 
         @staticmethod
-        def available_tiles(line: str):
+        def tuile_dispo(line: str):
             """ ex: Tuiles disponibles : [rose-3-clean, gris-4-clean] choisir entre 0 et 2 """
             q = line
-            tiles = {
-                Tile.Color[x[0]]: Tile(
-                    Tile.Color[x[0]],
-                    Tile.Status[x[2].strip()],
+            new_tuiles = {
+                Tuile.Color[x[0]]: Tuile(
+                    Tuile.Color[x[0]],
+                    Tuile.Status[x[2].strip()],
                     int(x[1].strip())
                 ) for x in [x.strip().split('-') for x in q[q.index('[') + 1: q.index(']')].split(',')]
             }
-            return tiles
+            return new_tuiles
 
         @staticmethod
-        def available_pos(line: str):
+        def position_dispo(line: str):
             """ positions disponibles : {1, 3}, choisir la valeur """
             q = line
             return [int(x) for x in q[q.index('{') + 1:q.index('}')].split(',')]
 
         @staticmethod
-        def use_power():
+        def activer_pouvoir(line: str):
             """ Voulez-vous activer le pouvoir (0/1) ?  """
             return [0, 1]
 
         @staticmethod
-        def pouvoir_gris():
+        def pouvoir_gris(line: str):
             """ Quelle salle obscurcir ? (0-9) """
             return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         @staticmethod
-        def pouvoir_bleu_un():
+        def pouvoir_bleu_un(line: str):
             """ Quelle salle bloquer ? (0-9) """
             return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
+        @staticmethod
         def pouvoir_bleu_deux(line: str):
             """ Quelle sortie ? Chosir parmi : {0, 2} """
-            return [int(x) for x in line[line.index('{') + 1:line.index('}')].split(',')]
+            q = line
+            return [int(x) for x in q[q.index('{') + 1:q.index('}')].split(',')]
 
         @staticmethod
-        def pouvoir_violet(available_tiles: list):
+        def pouvoir_violet(line: str, lst: list):
             """ Avec quelle couleur échanger (pas violet!) ?  """
-            return [x for x in available_tiles if x.color is not Tile.Color.violet]
+            return [x for x in lst if x.color is not Tuile.Color.violet]
 
         @staticmethod
         def pouvoir_blanc(line: str):
             """ rose-6-suspect, positions disponibles : {5, 7}, choisir la valeur """
             q = line
+            [int(x) for x in q[q.index('{') + 1:q.index('}')].split(',')]
             return [int(x) for x in q[q.index('{') + 1:q.index('}')].split(',')]
 
     def __init__(self, jid: int):
-        self._player_id = jid
-        self._turn = None
+        self._jid = jid
+        self._tour = None
         self._score = None
-        self._shadow = None
-        self._blocked = None
-        self._current_tile = None
-        self.players = None
-        self._phantom_color = None
+        self._ombre = None
+        self._bloque = None
+        self._current_tuile = None
         self._list_question = deque([])
-        self._game_tiles = {
-            Tile.Color.rose: deque([Tile(Tile.Color.rose)]),
-            Tile.Color.gris: deque([Tile(Tile.Color.gris)]),
-            Tile.Color.rouge: deque([Tile(Tile.Color.rouge)]),
-            Tile.Color.marron: deque([Tile(Tile.Color.marron)]),
-            Tile.Color.bleu: deque([Tile(Tile.Color.bleu)]),
-            Tile.Color.violet: deque([Tile(Tile.Color.violet)]),
-            Tile.Color.blanc: deque([Tile(Tile.Color.blanc)]),
-            Tile.Color.noir: deque([Tile(Tile.Color.noir)]),
+        self._hist_tuiles = {
+            Tuile.Color.rose: deque([Tuile(Tuile.Color.rose)]),
+            Tuile.Color.gris: deque([Tuile(Tuile.Color.gris)]),
+            Tuile.Color.rouge: deque([Tuile(Tuile.Color.rouge)]),
+            Tuile.Color.marron: deque([Tuile(Tuile.Color.marron)]),
+            Tuile.Color.bleu: deque([Tuile(Tuile.Color.bleu)]),
+            Tuile.Color.violet: deque([Tuile(Tuile.Color.violet)]),
+            Tuile.Color.blanc: deque([Tuile(Tuile.Color.blanc)]),
+            Tuile.Color.noir: deque([Tuile(Tuile.Color.noir)]),
         }
 
     def __repr__(self):
         return '<{c!s}: {str!s}>'.format(c=self.__class__.__name__, str=self)
 
     def __str__(self):
-        return 'Tour={_turn!s}, {_score!s}, Ombre={_shadow!s}, Bloque={_blocked!s}'.format(**self.__dict__)
+        return 'Tour={_tour!s}, {_score!s}, Ombre={_ombre!s}, Bloque={_bloque!s}'.format(**self.__dict__)
 
     def get_all_tuiles(self):
-        return {k: self._game_tiles[k][0] for k in self._game_tiles}
+        return {k: self._hist_tuiles[k][0] for k in self._hist_tuiles}
 
     def get_tuile(self, color):
         if isinstance(color, str):
-            return self._game_tiles[Tile.Color[color]][0]
-        return self._game_tiles[color][0]
+            return self._hist_tuiles[Tuile.Color[color]][0]
+        return self._hist_tuiles[color][0]
 
     def init_file(self):
         for file in [self.file_info, self.file_response, self.file_question]:
-            path = './{jid}/{file}'.format(jid=self._player_id, file=file)
+            path = './{jid}/{file}'.format(jid=self._jid, file=file)
             with open(path, 'w+') as f:
                 f.write("")
 
-    def pull_question(self, file: str = file_question):
-        path = './{jid}/{file}'.format(jid=self._player_id, file=file)
+    def pull_question(self, file: str=file_question):
+        path = './{jid}/{file}'.format(jid=self._jid, file=file)
         with open(path, 'r') as f:
-            content = f.read().strip()
-            # print('content: {}'.format(content))
-            return content, self._score, self._turn, self._shadow, self._blocked
+            return f.read().strip()
 
-    def push_response(self, text, file: str = file_response):
-        path = './{jid}/{file}'.format(jid=self._player_id, file=file)
+    def push_response(self, text, file: str=file_response):
+        path = './{jid}/{file}'.format(jid=self._jid, file=file)
         with open(path, 'w') as f:
             return f.write(str(text))
 
-    def get_game_state(self, file: str = file_info):
-        path = './{jid}/{file}'.format(jid=self._player_id, file=file)
-        with open(path, 'r') as f:
-            x = list(f)
-            if len(x) >= self.info_line:
-                x = x[self.info_line:]
-                self.info_line = len(x)
-                for line in x:
-                    self.parse_word_state(line)
-                    return self._score, self._turn, self._shadow, self._blocked, self._phantom_color, self._players
-            return None
-
-    def is_end(self, file: str = file_info):
-        path = './{jid}/{file}'.format(jid=self._player_id, file=file)
+    def is_end(self, file: str=file_info):
+        path = './{jid}/{file}'.format(jid=self._jid, file=file)
         with open(path, 'r') as f:
             x = list(f)
             if len(x) > 0:
@@ -211,72 +199,54 @@ class World():
 
         self._line = line
         r = re.search(r'^Tour:(?P<tour>[0-9]*),'
-                      '.*Score:(?P<scorev>[0-9]*)/(?P<scorem>[0-9]*),'
+                      '.*Score:(?P<score-v>[0-9]*)/(?P<score-m>[0-9]*),'
                       '.*Ombre:(?P<ombre>[0-9]*),'
                       '.*Bloque:{(?P<bloque>.*)}$', line)
-
-        if r is not None:
-            self._turn = int(r.group('tour'))
-            self._score = self.Score(value=r.group('scorev'),
-                                     max=r.group('scorem'))
-            self._shadow = int(r.group('ombre'))
-            self._blocked = [int(x) for x in r.group('bloque').split(',')]
-
-        matches = re.findall(r'\w+-[0-9]-\w+', line)
-        if len(matches) == 8:
-            players = []
-            for match in matches:
-                r = re.search(r'^(?P<color>\w*)-*'
-                              '-*(?P<pos>[0-9]*)-*'
-                              '.*-(?P<status>\w+)$', match)
-                if r is not None:
-                    players.append((r.group('color'), int(r.group('pos')), r.group('status')))
-            if players != []:
-                self.players = players
-
-        r = re.search(r'!!! Le fantôme est : (?P<phantom_color>\w+)', line)
-        if r is not None:
-            self.phantom_color = r.group('phantom_color')
+        self._tour = int(r.group('tour'))
+        self._score = self.Score(value=r.group('score-v'),
+                                 max=r.group('score-m'))
+        self._ombre = int(r.group('ombre'))
+        self._bloque = [int(x) for x in r.group('bloque').split(',')]
 
     def parse_question(self, line: str):
         q = None
         if 'Tuiles disponibles :' in line:
-            self._current_tile = None
-            t = self._Parse.available_tiles(line)
+            self._current_tuile = None
+            t = self._Parse.tuile_dispo(line)
             self._append_to_hist(t)
-            q = Question(self._current_tile, line, Question.Type.available_tile, t)
+            q = Question(self._current_tuile, line, Question.Type.tuile_dispo, t)
 
         elif 'positions disponibles :' in line:
-            q = Question(self._current_tile, line, Question.Type.available_pos,
-                         self._Parse.available_pos(line))
+            q = Question(self._current_tuile, line, Question.Type.position_dispo,
+                         self._Parse.position_dispo(line))
 
         elif 'Voulez-vous activer le pouvoir' in line:
-            q = Question(self._current_tile, line, Question.Type.use_power,
-                         self._Parse.use_power())
+            q = Question(self._current_tuile, line, Question.Type.activer_pouvoir,
+                         self._Parse.activer_pouvoir(line))
 
         # pouvoir gris
         elif 'Quelle salle obscurcir ? (0-9)' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.gris,
-                         self._Parse.pouvoir_gris())
+            q = Question(self._current_tuile, line, Question.Type.pouvoir.gris,
+                         self._Parse.pouvoir_gris(line))
 
         # pouvoir bleu 1
         elif 'Quelle salle bloquer ? (0-9)' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.bleu.un,
-                         self._Parse.pouvoir_bleu_un())
+            q = Question(self._current_tuile, line, Question.Type.pouvoir.bleu.un,
+                         self._Parse.pouvoir_bleu_un(line))
 
         # pouvoir bleu 2
         elif 'Quelle sortie ? Chosir parmi :' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.bleu.deux,
+            q = Question(self._current_tuile, line, Question.Type.pouvoir.bleu.deux,
                          self._Parse.pouvoir_bleu_deux(line))
 
         # pouvoir violet
         elif 'Avec quelle couleur échanger (pas violet!) ?' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.violet,
-                         self._Parse.pouvoir_violet(copy.deepcopy(self.get_all_tuiles()).values()))
+            q = Question(self._current_tuile, line, Question.Type.pouvoir.violet,
+                         self._Parse.pouvoir_violet(line, copy.deepcopy(self.get_all_tuiles()).values()))
 
         # pouvoir blanc
         elif ', positions disponibles :' in line:
-            q = Question(self._current_tile, line, Question.Type.pouvoir.blanc,
+            q = Question(self._current_tuile, line, Question.Type.pouvoir.blanc,
                          self._Parse.pouvoir_blanc(line))
 
         if q is not None:
@@ -284,84 +254,59 @@ class World():
         return q
 
     def _append_to_hist(self, lst: list):
-        for k, v in self._game_tiles.items():
+        for k, v in self._hist_tuiles.items():
             if k in lst and k != lst[k]:
-                self._game_tiles[k].appendleft(lst[k])
+                self._hist_tuiles[k].appendleft(lst[k])
 
     @property
     def jid(self):
-        return self._player_id
+        return self._jid
 
     @property
     def tour(self):
-        return self._turn
-
-    @tour.setter
-    def tour(self, tour):
-        self._turn = tour
-
-    @property
-    def players(self):
-        return self._turn
-
-    @players.setter
-    def players(self, players):
-        self._players = players
-
-    @property
-    def phantom_color(self):
-        return self._score
-
-    @phantom_color.setter
-    def phantom_color(self, phantom_color):
-        self._phantom_color = phantom_color
+        return self._tour
 
     @property
     def score(self):
         return self._score
 
-    @score.setter
-    def score(self, score):
-        self._score = score
+    @property
+    def ombre(self):
+        return self._ombre
+
+    @ombre.setter
+    def ombre(self, ombre):
+        self._ombre = ombre
 
     @property
-    def shadow(self):
-        return self._shadow
+    def bloque(self):
+        return self._bloque
 
-    @shadow.setter
-    def shadow(self, shadow):
-        self._shadow = shadow
-
-    @property
-    def blocked(self):
-        return self._blocked
-
-    @blocked.setter
-    def blocked(self, blocked):
-        self._blocked = blocked
+    @bloque.setter
+    def bloque(self, bloque):
+        self._bloque = bloque
 
     @property
-    def current_tile(self):
-        return self._current_tile
+    def current_tuile(self):
+        return self._current_tuile
 
-    @current_tile.setter
-    def current_tile(self, current_tile: Tile):
-        self._current_tile = current_tile
+    @current_tuile.setter
+    def current_tuile(self, current_tuile: Tuile):
+        self._current_tuile = current_tuile
 
     @property
     def list_question(self):
         return self._list_question
 
     @property
-    def hist_tiles(self):
-        return self._game_tiles
+    def hist_tuiles(self):
+        return self._hist_tuiles
 
 
 class skip(object):
     """
-    Protects item from becoming an Enum member during class creation.
+    Protects item from becaming an Enum member during class creation.
     """
-
     def __init__(self, value):
         self.value = value
 
@@ -370,11 +315,12 @@ class skip(object):
 
 
 class Question(list):
+
     class Type(Enum):
         unknown = 0
-        available_tile = 1
-        available_pos = 2
-        use_power = 3
+        tuile_dispo = 1
+        position_dispo = 2
+        activer_pouvoir = 3
 
         @skip
         class pouvoir(Enum):
@@ -404,9 +350,10 @@ class Question(list):
 
         def __str__(self):
             return '{!s}.{!s}'.format(type(self).__name__, self.name)
+            # return self.name
 
-    def __init__(self, tile: Tile, line: str, type: Type, *args):
-        self._tile = tile
+    def __init__(self, tuile: Tuile, line: str, type: Type, *args):
+        self._tuile = tuile
         self._line = line
         self._type = type
         list.__init__(self, *args)
@@ -415,15 +362,15 @@ class Question(list):
         return list.__getitem__(self, key)
 
     def __repr__(self):
-        return '<{c!s}:{on!r} {t!r} {s!r}>'.format(c=self.__class__.__name__, on=self._tile,
+        return '<{c!s}:{on!r} {t!r} {s!r}>'.format(c=self.__class__.__name__, on=self._tuile,
                                                    t=self.type, s=list.__repr__(self))
 
     def __str__(self):
         return '{t!s} {s!s}'.format(t=self.type, s=list.__str__(self))
 
     @property
-    def tile(self):
-        return self._tile
+    def tuile(self):
+        return self._tuile
 
     @property
     def line(self):
