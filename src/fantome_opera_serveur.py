@@ -208,9 +208,12 @@ class partie:
         return "Tour:" + str(self.num_tour) + ", Score:" + str(self.start) + "/" + str(self.end) + ", Ombre:" + str(
             self.shadow) + ", Bloque:" + str(self.bloque) + "\n" + "  ".join([str(p) for p in self.personnages])
 
-
-
+fantome_qtable = []
+inspector_qtable = []
+NB_GAMES = 3
 joueurs = [joueur(0), joueur(1)]
-Thread(target=inspector.lancer).start()
-Thread(target=fantome.lancer).start()
-partie(joueurs).lancer()
+for i in range(0, NB_GAMES):
+    print('*' * 10)
+    Thread(target=lambda: inspector.lancer(inspector_qtable)).start()
+    Thread(target=lambda: fantome.lancer(fantome_qtable)).start()
+    partie(joueurs).lancer()
