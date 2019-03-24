@@ -214,13 +214,6 @@ class Process():
 
         return res
 
-def log_to_csv(items):
-    import csv
-    with open(f'./{jid}/log.csv', 'a+') as f:
-        writer = csv.writer(f)
-        for item in items:
-            writer.writerow(item)
-
 
 def lancer(qtable):
     old_question = None
@@ -241,4 +234,4 @@ def lancer(qtable):
             old_question = question
     print('inspector table : ', agent.q_table)
     log.info('=== END')
-    # agent.save()
+    agent.save()

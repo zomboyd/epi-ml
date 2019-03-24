@@ -210,7 +210,7 @@ class partie:
 
 fantome_qtable = []
 inspector_qtable = []
-NB_GAMES = 3
+NB_GAMES = 2
 joueurs = [joueur(0), joueur(1)]
 for i in range(0, NB_GAMES):
     print('*' * 10)

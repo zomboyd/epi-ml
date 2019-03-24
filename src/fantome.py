@@ -43,9 +43,6 @@ log.addHandler(handler)
 #       \______/
 #
 
-def compute_reward(score, nb_suspects, nb_tour):
-    return score - (8 - (nb_suspects * (1 / (nb_tour + 1))))
-
 class Process():
 
     passages = [{1, 4},
@@ -240,4 +237,4 @@ def lancer(qtable):
             old_question = question
     print('fantome history : ', agent.history)
     log.info('=== END')
-    # agent.save()
+    agent.save()
