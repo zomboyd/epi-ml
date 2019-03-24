@@ -24,7 +24,6 @@ class Agent:
             Question.Type.activer_pouvoir.value: np.zeros((4, 2)),
             Question.Type.position_dispo.value: np.zeros((4, 8)),
             Question.Type.tuile_dispo.value: np.zeros((4, 8)),
-
         }
         self.states = []
         self.history = {
@@ -42,7 +41,7 @@ class Agent:
         self.lr = .8
         self.y = .95
         # self.load()
-    
+
     def get_nb_suspects(self):
         tuiles = list(self.env.get_all_tuiles().values())
         nb_suspects = 0
@@ -54,9 +53,11 @@ class Agent:
 
     def get_action(self, choices, question):
         state = np.random.randint(0, 5, (1, 4))
+        # state = np.array([1, 2, 2, 4]).reshape((1, 4))
         action = self.pick_a_random_action(choices)
         nb_suspects = self.get_nb_suspects()
         print(f'nb_ suspects : {nb_suspects}')
+        q_type = question.type.value
         if getattr(action, 'value', None):
             action = action.value
         # if len(self.states) == 0 or np.random.randn() < 0.1:
@@ -64,17 +65,12 @@ class Agent:
         #     if getattr(action, 'value', None):
         #         action = action.value
         # else:
-        #     action = np.argmax(self.q_table[question][state])
-        #     print(f'action -> {action} || choices : {choices}')
+        #     action = int(self.q_table[q_type][state][np.argmax(self.q_table[q_type][state])])
+            print(f'action -> {action} || choices : {choices}')
         self.states.append(state)
-        q_type = question.type.value
-        # if q_type == 6:
-        #     import pdb; pdb.set_trace()
-        # if q_type == 5.1 or q_type == 5.2 or q_type == 4:
-        #     q_type = Question.Type.activer_pouvoir.value
         reward = self.compute_reward(state, action, q_type)
         self.history[q_type].append((state, action, choices, reward))
-        # self.update_table(state, next_state, action, reward, q_type)
+        # self.update_table(state, state, action, reward, q_type)
         self.epochs += 1
         return action
 
